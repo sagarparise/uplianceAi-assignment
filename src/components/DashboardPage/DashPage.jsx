@@ -5,32 +5,55 @@ import { auth, db } from "../../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import login from "../.././assets/login.png";
 import { useNavigate } from "react-router-dom";
-
+import { toast } from "react-toastify";
+import { Spin } from "antd";
 function DashPage() {
   const [user] = useAuthState(auth);
+  const[loading, setLoading] = useState(false)
   const [profileInfo, setProfileInfo] = useState();
   const navigate = useNavigate()
 
   useEffect(() => {
     userData();
-  }, []);
+  }, [user]);
+
+
+console.log(user)
+
 
   const userData = async () => {
-    const docRef = doc(db, "users", user.uid);
-    const currUser = await getDoc(docRef);
-    console.log(currUser);
-    if (currUser.exists()) {
-      console.log(currUser.data());
-      setProfileInfo(currUser.data());
-    }
+  if(user){
+    setLoading(true)
+    try {
+      const docRef = doc(db, "users", user.uid);
+      const currUser = await getDoc(docRef);
+      console.log(currUser);
+      if (currUser.exists()) {
+        console.log(currUser.data());
+        setProfileInfo(currUser.data());
+        setLoading(false)
+      }  
+     } catch (error) {
+       setLoading(false)
+      toast.error(`${error}`, {
+        position: "top-right",
+      });
+     }
+  }
   };
+
+
   if(!user){
     navigate('/')
   }
   return (
     <div className="w-full h-screen bg-slate-100">
       <Header />
-      <div className="p-10 flex justify-center items-center">
+     {
+      loading ? <>
+      <Spin fullscreen />
+      </> : <>
+       <div className="p-10 flex justify-center items-center">
         {profileInfo && (
           <div className="card w-[350px] h-[400px] p-4 rounded-lg shadow-md border flex justify-start items-center flex-col">
             <img src={login} className="w-14" alt="" />
@@ -56,8 +79,11 @@ function DashPage() {
           </div>
         )}
       </div>
+      </>
+     }
     </div>
   );
 }
 
 export default DashPage;
+ 
